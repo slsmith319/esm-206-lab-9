@@ -1,6 +1,6 @@
 ---
 title: "Lab 9 - Multiple Linear Regression"
-author: "ENTER YOUR NAME HERE"
+author: "Sam Smith"
 output:
   html_document: default
 ---
@@ -31,6 +31,8 @@ Use this template to follow along in Lab Week 9. Each code chunk you'll need is 
 
 # a. Load packages 'tidyverse' and 'stargazer':
 
+library(tidyverse)
+library(stargazer)
 
 
 ```
@@ -41,10 +43,13 @@ Use this template to follow along in Lab Week 9. Each code chunk you'll need is 
 
 # a. Read in data as 'homes':
 
+homes <- read_csv("slo_homes.csv")
 
 # b. Filter to only include cities "San Luis Obispo", "Santa Maria-Orcutt", "Atascadero", and "Arroyo Grande", and call this new subset 'homes_sub':
 
-
+homes_sub <- homes %>%
+  filter(City=="Arroyo Grande" | City=="San Luis Obispo" | City=="Atascadero" | City=="Santa Maria-Orcutt")
+homes_sub
 
 ```
 
@@ -88,6 +93,9 @@ by_sqft
 
 # Observations here: Does relationship appear ~ linear? Anything else we can pick out re: trends, outliers, etc.? What is the general trend? Any outliers? Is there reason enough for us to omit it?
 
+#NOTES: yes, appears linear. also think that its due to random chance
+#residuals? have to create the model first!! 
+
 ```
 
 ###4. Multiple linear regression
@@ -107,8 +115,22 @@ Use summary() to view the model output and statistics.
 
 # a. Saturated model: 
 
+homes_lm1 <- lm(Price ~ City + Bedrooms + Bathrooms + SqFt + PricePerSqFt + Status, data = homes_sub)
+#this mean home price as a function of all the variables after the tilde
+#not a good model because price per square foot is included and this variable is calc using output variable so its like using a perfectly correlated variable in the model--leads to bias overfitting of model results. 
+#BAD MODEL, DOESNT MAKE SENSE
+
+#also concerning: co-linerarity: idea that if multiple variables exist in a model that are highly correlated, then the model wont make sense
+#in this model, these three are the same: bedrooms, bathrooms, square feet (all tell you the same thing about the size of the house)
+#might want to get rid of some of these
+
+#equation: Price= -626690 - 76863(SLO)-9068.2(Atasc) + 120160(SM-Orcutt)
+
+#remember that some variables arent included because they are the reference variables!
 
 # b. Model summary:
+
+summary(homes_lm1)
 
 ```
 
@@ -118,7 +140,20 @@ The next model: Exclude price per square foot, and bedrooms/bathrooms (since the
 
 # a. Updated model with variables City, SqFt, and Status:
 
+homes_lm2 <- lm(Price ~ City + SqFt + Status, data = homes_sub)
+homes_lm2
+
+#Interpretation: looking at coeff for SLO and price, if you had two houses that were exactly the same in terms of all the other variables, then the house in SLO would sell for $34,525 more in SLO than Arroyo Grande
+# for every 1 sq ft increase in housing size, price would go up by $245 sq ft.
+
 # b. Model summary:
+
+summary(homes_lm2)
+
+#look at the p-values for variables not the intercept! and the overall model outcome!
+#use adjusted R2 for multiple-variable
+
+
 
 ```
 
@@ -128,20 +163,31 @@ Wait...but what if I wanted everything to be with respect to a Regular sale stat
 
 # a. Set Status to class 'factor'
 
+#check class of City--- its a characters
+#make it a factor!!
+homes_sub$Status <- factor(homes_sub$Status)
 
 # b. Check to ensure it's a factor now
 
+#use class function in console to check!
 
 # c. Check levels:
 
+#Tells you the ORDER- NOTE that the first one is the reference one!
+levels(homes_sub$Status)
 
 # d. Reassign reference level of "Status" to "Regular":
 
+#this way "Regular" is your reference level because that is more intuitive and more houses are sold as regular houses.
+
+homes_sub$Status <- fct_relevel(homes_sub$Status, "Regular")
 
 # e. Now run the regression again - same equation, but now the reference level is different (Status = Regular): 
 
+homes_lm3 <- lm(Price ~ City + SqFt + Status, data=homes_sub)
+homes_lm3
 
-
+#note that however you run the model interpretation (whichever the reference levels are), the results should be the same. Ex. price of foreclosure and short sale compared to Regular houses
 ```
 
 Interpret the coefficients and statistical outcomes above. 
@@ -156,6 +202,17 @@ Then we can evaluate model diagnostics using the plot() function:
 ```{r diagnostics}
 
 # a. Model diagnostics:
+
+plot(homes_lm3)
+
+#looks pretty even in terms of variance
+#even though there are a few outliers, do NOT remove them! ONLY remove if they are truly not representative of your data. dont use this plot to make decisions about outliers! IGNORE THE RED LINES
+
+#residuals variance (spread)- yes
+# qqplot- yessssss
+# dont really need to look at the others
+
+#overall, heteroscedasciticty is okay, residuals normality definitey looks good, and conceptually and mathmatically my model makes sense!
 
 ```
 
