@@ -224,7 +224,12 @@ The AIC is a quantitative metric for model "optimization" that balances complexi
 
 # a. AIC values for each model
 
+sat_aic <- AIC(homes_lm1)  #lower AIC (ran in Console) but worse model! see notes above
+final_aic <- AIC(homes_lm3) #higher but better
+
 # Answer: which would you pick? 
+
+#I would still pick homes_lm3 because of reasons above:
 
 ```
 
@@ -234,7 +239,8 @@ The AIC is a quantitative metric for model "optimization" that balances complexi
 
 # a. Prepare a nice regression table:
 
-
+lm_table <- stargazer(homes_lm1, homes_lm3, type = "html")
+lm_table
 
 # Note: If you want to work with this in Word, save to html, open, copy and paste into Word. 
 
@@ -278,6 +284,10 @@ df_new <- data.frame(City = rep(c("San Luis Obispo",
                                   times = 12, 
                                   each = 20))
 
+#times= repeated 12 times
+#each=
+#length= 
+
 ```
 
 Make predictions for the new data using predict():
@@ -286,9 +296,15 @@ Make predictions for the new data using predict():
 
 # a. Make predictions using the new data frame:
 
+price_predict <- predict(homes_lm3, 
+                         newdata = df_new,
+                         se.fit = TRUE,
+                         interval = "confidence")
+
 # b. Bind predictions to the data to make it actually useful:
 
-
+predict_df <- data.frame(df_new, price_predict)
+#looking at the df, you can see the predicted values of a home in _____ that is ___ sq ft.
 
 ```
 
@@ -298,6 +314,11 @@ Then visualize it!
 
 # Create a line graph with square footage on the x-axis, predicted price on y-axis, with color dependent on City and facet_wrapped by sale status (follow along):
 
+predict_graph <- ggplot(predict_df, aes(x = SqFt, y = fit.fit)) +
+  geom_line(aes(color = City)) +
+  facet_wrap(~Status)
+
+predict_graph
 
 ```
 
